@@ -16,7 +16,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-app = ["streamlit>=1.32", "plotly>=5.18"]
 parquet = ["pyarrow>=14"]
 dev = ["pytest>=7.4"]
 notebook = ["jupyterlab>=4.0", "ipykernel>=6.0"]
