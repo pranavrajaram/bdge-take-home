@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Fantasy Range Projections — Methodology</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="demo.css" />
+</head>
+<body>
+<nav>
+  <a href="week1_projection_demo.html">Demo walkthrough</a>
+  <a href="projections.html">Projections</a>
+  <a href="methodology.html">Methodology</a>
+  <a href="hyperparameters.html">Hyperparameters</a>
+  <a href="demo_script.html">Demo script</a>
+</nav>
+<header id="title-block-header">
+<h1 class="title">Fantasy Range Projections — Methodology</h1>
+</header>
+<h1 id="how-the-week-1-projection-model-works">How the Week 1 projection
+model works</h1>
+<p>This page explains the model in plain language. The short version is:
+instead of guessing one fantasy-point number, we estimate the chain of
+events that can produce points and repeat that chain many thousands of
+times.</p>
+<p>For example, a WR can score because his team passes often, he earns a
+large share of those passes, he catches them efficiently, gains yards,
+and perhaps scores. Each part is uncertain. The final projection is the
+collection of all those plausible simulated games.</p>
+<h2 id="what-a-week-1-projection-means">What a Week 1 projection
+means</h2>
+<p><code>P10</code>, <code>P25</code>, <code>P50</code>,
+<code>P75</code>, and <code>P90</code> are percentiles of simulated PPR
+fantasy points.</p>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Output</th>
+<th>Plain-English meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>P10</td>
+<td>In 90% of simulated games, the player scored more than this. It is a
+reasonable low-end outcome, not a guaranteed floor.</td>
+</tr>
+<tr class="even">
+<td>P50 / median</td>
+<td>Half of simulations are above this number and half below it. This is
+the best single-number summary.</td>
+</tr>
+<tr class="odd">
+<td>P90</td>
+<td>Only 10% of simulations exceed this. It is a plausible ceiling, not
+a prediction of the player’s best game.</td>
+</tr>
+<tr class="even">
+<td>P(10+), P(15+), P(20+)</td>
+<td>The share of simulated games that clear each scoring threshold.</td>
+</tr>
+<tr class="odd">
+<td>role uncertainty</td>
+<td>Low / medium / high confidence in workload, not confidence that the
+player is talented.</td>
+</tr>
+</tbody>
+</table>
+<p>The project uses PPR scoring: one point per reception, 0.1 per
+rushing or receiving yard, and six per rushing or receiving
+touchdown.</p>
+<h2 id="the-actual-2026-week-1-player-pool">The actual 2026 Week 1
+player pool</h2>
+<p>The projection file is generated from nflverse’s 2026 Week 1 roster
+snapshot. It includes active RBs, WRs, and TEs—not just well-known
+fantasy starters. That is intentional: anyone on the active roster is a
+possible outcome candidate, though players with no meaningful NFL
+history usually have low medians and wide workload uncertainty.</p>
+<p>The generated artifact is calibrated using completed historical Week
+1 forecasts:</p>
+<ul>
+<li><code>outputs/week1_2026/projections.csv</code> — 422 active
+RB/WR/TE projections</li>
+<li><code>outputs/week1_2026/candidate_roster.csv</code> — the exact
+roster universe used</li>
+</ul>
+<p>The roster decides <strong>who is eligible to project</strong>. It
+does not pretend to know the exact depth chart or Week 1 workload. Those
+uncertainties remain in the model. Refresh the roster shortly before
+lineup decisions; it is a dated public snapshot, not a live injury
+feed.</p>
+<h2 id="step-1-collect-historical-player-games">Step 1: collect
+historical player games</h2>
+<p>We load 2021–25 nflverse weekly player-stat files. Each raw row is a
+player game. We retain RB, WR, and TE rows for the fantasy output, but
+aggregate team opportunities before filtering so QB pass attempts still
+count toward team volume.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>File</th>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Download box scores</td>
+<td><code>src/fantasy_ranges/data.py</code></td>
+<td><code>fetch_player_stats</code></td>
+<td>Downloads/caches the nflverse weekly stats CSVs.</td>
+</tr>
+<tr class="even">
+<td>Clean and aggregate</td>
+<td><code>src/fantasy_ranges/data.py</code></td>
+<td><code>normalize_player_games</code></td>
+<td>Standardizes column names and creates team targets, rush attempts,
+pass attempts, player target share, and player rush share.</td>
+</tr>
+<tr class="odd">
+<td>Download current roster</td>
+<td><code>src/fantasy_ranges/data.py</code></td>
+<td><code>fetch_roster</code></td>
+<td>Downloads/caches the season roster release.</td>
+</tr>
+<tr class="even">
+<td>Select Week 1 candidates</td>
+<td><code>src/fantasy_ranges/data.py</code></td>
+<td><code>week1_candidates_from_roster</code></td>
+<td>Keeps active RB/WR/TEs, maps IDs/names, and flags rookies.</td>
+</tr>
+</tbody>
+</table>
+<p>The normalized historical table has both actual outcomes (targets,
+yards, touchdowns, fantasy points) and team context. Actual outcomes are
+labels for history/backtesting—not features that leak into a future
+prediction.</p>
+<h2 id="step-2-create-a-preseason-player-prior">Step 2: create a
+preseason player prior</h2>
+<p>Week 1 is different from Week 8: there are no current-season targets
+or carries. For the 2026 output, the feature builder uses only 2021–25
+results.</p>
+<p>For an established player, it calculates recency-weighted history
+for:</p>
+<ul>
+<li>target share and rush share;</li>
+<li>catches per target, yards per catch, and rushing yards per
+carry;</li>
+<li>receiving and rushing TD rates;</li>
+<li>sample size and recent usage volatility.</li>
+</ul>
+<p>Older seasons are downweighted, so last season matters most without
+treating a single season as the whole truth. A player with few games is
+pulled toward the typical player at his position. This is a practical
+version of “partial pooling”: we let a player be himself when there is
+enough evidence and otherwise borrow strength from similar players.</p>
+<p>Destination-team volume comes from that team’s most recent completed
+season. More precisely, the feature builder takes one distinct
+<code>season, week, team</code> row for every regular-season game, then
+calculates the simple arithmetic mean:</p>
+<pre class="text"><code>expected_team_pass_attempts = mean(team pass attempts in the team&#39;s 2025 games)
+expected_team_rush_attempts = mean(team rush attempts in the team&#39;s 2025 games)</code></pre>
+<p>QB pass attempts and QB carries are included in the team totals. The
+player table repeats those totals on several player rows, so the code
+explicitly deduplicates to one team-game before averaging; otherwise
+games with more recorded RB/WR/TEs would be overweighted. For example,
+SF’s 17 2025 games yield 33.76 pass attempts and 28.29 rush attempts per
+game. A 2026 SF player starts with those means; a player changing teams
+inherits his destination team’s mean, not his old team’s opportunity
+pool. A manually supplied team-volume input overrides this baseline.</p>
+<p>These are baseline means, not fixed simulation values. The simulator
+turns the pass mean into a Gamma-Poisson draw (18% latent-volume
+coefficient of variation) and the rush mean into a Gamma-Poisson draw
+(20% CV), then draws the actual game’s attempts from those rates.
+Team-total/spread, opponent, QB, and coaching projections are not
+currently included and should be added as dated, auditable
+overrides.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>File</th>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Build historical player prior</td>
+<td><code>src/fantasy_ranges/features.py</code></td>
+<td><code>_player_prior</code></td>
+<td>Computes recency-weighted historical rates and samples.</td>
+</tr>
+<tr class="even">
+<td>Build final Week 1 features</td>
+<td><code>src/fantasy_ranges/features.py</code></td>
+<td><code>build_preseason_features</code></td>
+<td>Enforces <code>season &lt; target_season</code>, shrinks small
+samples, identifies team changes, and assigns destination-team
+volume.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="role-uncertainty">Role uncertainty</h3>
+<p>Role uncertainty rises when the evidence for a stable workload is
+weak:</p>
+<ul>
+<li>few previous NFL games;</li>
+<li>rookie status;</li>
+<li>a new team;</li>
+<li>unstable prior target share; or</li>
+<li>a manually supplied uncertainty override.</li>
+</ul>
+<p>It does <strong>not</strong> simply add a few points to an interval.
+Instead it makes the underlying target-share and carry-share
+distributions less concentrated. A stable veteran’s simulated shares
+remain close to his historical role more often; a rookie’s share can
+range from a small role to a meaningful one. This is why two players can
+have equal medians but different floors and ceilings.</p>
+<h2 id="step-3-simulate-the-football-events">Step 3: simulate the
+football events</h2>
+<p><code>ComponentSimulator</code> is the core model. It repeats the
+following process for a player 10,000–20,000 times:</p>
+<ol type="1">
+<li>Draw a plausible number of team pass attempts and rush
+attempts.</li>
+<li>Draw the player’s target share and carry share. Higher role
+uncertainty means a wider draw.</li>
+<li>Turn shares into discrete targets and carries.</li>
+<li>Draw receptions conditional on targets.</li>
+<li>Draw positive, right-skewed yards conditional on
+receptions/carries.</li>
+<li>Draw receiving and rushing touchdowns using strongly shrunk TD
+rates.</li>
+<li>Convert the resulting stat line to PPR fantasy points.</li>
+</ol>
+<p>The code uses beta-binomial draws for opportunities. In everyday
+terms, a plain binomial model acts as if a player’s chance of a target
+is fixed for every play. The beta-binomial model first allows that
+chance itself to move around from game to game, which better represents
+uncertain roles. Yardage uses gamma draws so negative yards cannot
+appear just because a normal distribution happened to draw below
+zero.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>File</th>
+<th>Function / class</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Fit position anchors</td>
+<td><code>src/fantasy_ranges/simulation.py</code></td>
+<td><code>ComponentSimulator.fit</code></td>
+<td>Learns position-level catch, yardage, TD, share, and targetable-pass
+priors.</td>
+</tr>
+<tr class="even">
+<td>Simulate a player</td>
+<td><code>src/fantasy_ranges/simulation.py</code></td>
+<td><code>ComponentSimulator.simulate</code></td>
+<td>Produces one player’s fantasy-point samples.</td>
+</tr>
+<tr class="odd">
+<td>Summarize samples</td>
+<td><code>src/fantasy_ranges/simulation.py</code></td>
+<td><code>Distribution.summary</code></td>
+<td>Calculates percentiles and threshold probabilities.</td>
+</tr>
+<tr class="even">
+<td>Create product table</td>
+<td><code>src/fantasy_ranges/projections.py</code></td>
+<td><code>project_week1</code></td>
+<td>Runs priors + simulator and formats player-facing columns.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="step-4-compare-with-simpler-models">Step 4: compare with simpler
+models</h2>
+<p>The component model should earn its complexity. We therefore compare
+it against two simpler baselines:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Baseline</th>
+<th>File / function</th>
+<th>Intuition</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Position-normal</td>
+<td><code>src/fantasy_ranges/baselines.py</code> →
+<code>PositionNormalBaseline</code></td>
+<td>Start with a component point center and add the typical historical
+error width for that position.</td>
+</tr>
+<tr class="even">
+<td>Usage neighbors</td>
+<td><code>src/fantasy_ranges/baselines.py</code> →
+<code>UsageNearestNeighbors</code></td>
+<td>Find past player-games with similar target share, rush share, prior
+volume, and uncertainty; use their observed outcomes as the range.</td>
+</tr>
+</tbody>
+</table>
+<p>These are valuable controls. If the sophisticated model is less
+calibrated than a simple baseline, the answer is to improve/calibrate
+it—not to hide the comparison.</p>
+<h2 id="step-5-check-whether-the-ranges-are-honest">Step 5: check
+whether the ranges are honest</h2>
+<p>Point error alone is not enough. A model could have a decent median
+while giving intervals that are far too narrow. The backtest holds out
+Week 1 of each season from 2022–25 and only lets the model see earlier
+completed seasons.</p>
+<p>We report:</p>
+<ul>
+<li><strong>median absolute error:</strong> how far the middle forecast
+is from reality;</li>
+<li><strong>pinball loss:</strong> error quality at each requested
+percentile;</li>
+<li><strong>50% / 80% coverage:</strong> how often the actual score
+landed in the claimed interval; and</li>
+<li><strong>interval width:</strong> how wide that claimed interval
+was.</li>
+</ul>
+<p>The raw component model was under-dispersed in the first backtest.
+That is a useful discovery, not a failure to conceal.
+<code>QuantileConformalizer</code> learns an additive correction from
+<em>earlier</em> Week 1 forecast errors and applies it to the next
+held-out year. It improved observed coverage toward the declared
+levels.</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Job</th>
+<th>File</th>
+<th>Function / class</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Build historical Week 1 examples</td>
+<td><code>src/fantasy_ranges/backtest.py</code></td>
+<td><code>build_week1_panel</code></td>
+<td>Creates labeled rows with only prior-season features.</td>
+</tr>
+<tr class="even">
+<td>Run walk-forward backtest</td>
+<td><code>src/fantasy_ranges/backtest.py</code></td>
+<td><code>run_week1_backtest</code></td>
+<td>Repeats fit → predict → reveal actual outcome across seasons.</td>
+</tr>
+<tr class="odd">
+<td>Score distributions</td>
+<td><code>src/fantasy_ranges/backtest.py</code></td>
+<td><code>evaluate</code></td>
+<td>Calculates coverage, interval width, pinball loss, and median
+AE.</td>
+</tr>
+<tr class="even">
+<td>Calibrate quantiles</td>
+<td><code>src/fantasy_ranges/backtest.py</code></td>
+<td><code>QuantileConformalizer</code></td>
+<td>Corrects future quantiles using only previous forecast
+residuals.</td>
+</tr>
+</tbody>
+</table>
+<p>See <code>docs/backtest_results.md</code> for the measured historical
+result and <code>outputs/backtest/calibration.png</code> for the
+coverage chart.</p>
+<h2 id="how-to-refresh-actual-week-1-projections">How to refresh actual
+Week 1 projections</h2>
+<p>Run this from the activated project virtual environment:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">fantasy-ranges</span> project-week1 <span class="dt">\</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--input</span> data/raw/player_games.csv <span class="dt">\</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--season</span> 2026 <span class="dt">\</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--out-dir</span> outputs/week1_2026 <span class="dt">\</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--simulations</span> 20000</span></code></pre></div>
+<p>If <code>--roster</code> is omitted, the command fetches/caches the
+public 2026 roster release in <code>data/inputs/</code>. To use a
+reviewed/offline roster file, pass
+<code>--roster path/to/roster_2026.csv</code>. The CLI entry point
+itself is <code>src/fantasy_ranges/cli.py</code> →
+<code>main</code>.</p>
+<h2 id="important-limitations-and-sensible-next-improvements">Important
+limitations and sensible next improvements</h2>
+<p>This is a statistically honest Week 1 baseline, not a claim of
+omniscience.</p>
+<ol type="1">
+<li><strong>The roster is not a depth chart.</strong> Active status says
+a player can play; it does not say whether he starts. Add a reviewed
+role/depth-chart input and use it as a documented prior override.</li>
+<li><strong>No live injury/preseason feed is used.</strong> Refresh
+roster/injury information close to kickoff and widen or suppress players
+with uncertain availability.</li>
+<li><strong>No opponent/game-total inputs are yet applied.</strong> Add
+schedules, projected team totals, spreads, and defensive context as
+separately dated inputs.</li>
+<li><strong>Routes and red-zone work are not in the core public
+box-score model.</strong> FTN charting can enhance historical priors,
+but its availability must be treated carefully and it should never be
+silently backfilled as a live feature.</li>
+<li><strong>TDs remain noisy.</strong> The model intentionally shrinks
+player TD rates toward positional averages rather than turning last
+year’s TD total into a promise.</li>
+<li><strong>Calibration is historical, not clairvoyant.</strong> The
+current projection run uses completed 2022–25 Week 1 residuals to
+calibrate the component model’s quantiles. It cannot account for a new
+2026-specific factor that is absent from the roster and historical
+inputs.</li>
+</ol>
+<p>The guided notebook
+(<code>notebooks/week1_projection_walkthrough.ipynb</code>) is the best
+place to see the main calculations in sequence; the package files above
+are the production implementation.</p>
+<p>For an explicit inventory of every numerical assumption, its effect,
+and whether it is a tuned parameter or a prototype heuristic, see <a
+href="hyperparameters.md"><code>hyperparameters.md</code></a>.</p>
+</body>
+</html>

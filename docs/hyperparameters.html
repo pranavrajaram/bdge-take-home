@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Fantasy Range Projections — Hyperparameters</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="demo.css" />
+</head>
+<body>
+<nav>
+  <a href="week1_projection_demo.html">Demo walkthrough</a>
+  <a href="projections.html">Projections</a>
+  <a href="methodology.html">Methodology</a>
+  <a href="hyperparameters.html">Hyperparameters</a>
+  <a href="demo_script.html">Demo script</a>
+</nav>
+<header id="title-block-header">
+<h1 class="title">Fantasy Range Projections — Hyperparameters</h1>
+</header>
+<h1 id="model-constants-and-hyperparameters">Model constants and
+hyperparameters</h1>
+<p>This is the honest inventory of the non-data values in the current
+prototype. Some are scoring/output conventions, some are numerical
+safeguards, and some are modeling assumptions. The modeling assumptions
+were selected as reasonable starting priors and checked through the Week
+1 backtest; they were not estimated by an optimizer.</p>
+<h2 id="main-assumptions">Main assumptions</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Constant</th>
+<th>Location</th>
+<th>Meaning and effect</th>
+<th>Status / what to do</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>0.60</td>
+<td>features.py, weighted mean</td>
+<td>Annual recency decay. For three equal-length prior seasons, the most
+recent season has 51.0% of the weight.</td>
+<td>Heuristic. Tune through nested walk-forward validation over .50 to
+.90.</td>
+</tr>
+<tr class="even">
+<td>48</td>
+<td>simulation.py, shrink</td>
+<td>Number of prior player games at which positional pooling reaches
+zero.</td>
+<td>Heuristic. Roughly three full seasons; prevents an established
+starter being pulled toward a prior that includes backups.</td>
+</tr>
+<tr class="odd">
+<td>14</td>
+<td>simulation.py, shrink</td>
+<td>Initial position-prior pseudo-games for target/carry share, tapered
+linearly to zero by 48 prior games.</td>
+<td>Heuristic. Most relevant to sparse histories.</td>
+</tr>
+<tr class="even">
+<td>20</td>
+<td>shrink</td>
+<td>Initial pseudo-games for catch rate and yards per reception/carry,
+tapered to zero by 48 games.</td>
+<td>Heuristic. More pooling for limited efficiency samples.</td>
+</tr>
+<tr class="odd">
+<td>30</td>
+<td>shrink</td>
+<td>Initial pseudo-games for TD rate, tapered to zero by 48 games.</td>
+<td>Heuristic. Stronger pooling for sparse TD samples.</td>
+</tr>
+<tr class="even">
+<td>0.18, 0.20</td>
+<td>simulate</td>
+<td>Latent coefficients of variation for team pass and rush volume.</td>
+<td>Heuristic. Estimate historical team-game residual variation
+instead.</td>
+</tr>
+<tr class="odd">
+<td>70, 5</td>
+<td>simulate</td>
+<td>Role-share beta concentration: 70 times (1 minus uncertainty), plus
+5.</td>
+<td>Heuristic. Sets role-driven range width.</td>
+</tr>
+<tr class="even">
+<td>45 times (1 minus uncertainty / 2)</td>
+<td>simulate</td>
+<td>Catch-rate beta concentration.</td>
+<td>Heuristic. Says catch rates vary less than workload shares.</td>
+</tr>
+<tr class="odd">
+<td>.42, .38</td>
+<td>simulate</td>
+<td>Gamma CV for receiving yards/reception and rushing yards/carry.</td>
+<td>Heuristic. Estimate by position/opportunity tier.</td>
+</tr>
+<tr class="even">
+<td>.64, .45, .82</td>
+<td>data.py, simulation.py</td>
+<td>Targetable-pass fallback and lower/upper guardrails.</td>
+<td>Data-quality heuristic. Material: the RB rate reaches the .82
+ceiling.</td>
+</tr>
+<tr class="odd">
+<td>1.2, 1.0</td>
+<td>simulate</td>
+<td>Caps receiving/rushing TD Poisson rates.</td>
+<td>Guardrails against malformed input, not football laws.</td>
+</tr>
+</tbody>
+</table>
+<h2
+id="fallback-values-that-normally-do-not-affect-the-real-2026-run">Fallback
+values that normally do not affect the real 2026 run</h2>
+<p>These are still constants, but they only apply when data are absent
+or a caller bypasses the normal feature-builder path.</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Location</th>
+<th>Used when</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>target share <code>.15</code>, rush share <code>.10</code></td>
+<td>simulation fit</td>
+<td>A position has no usable historical observations.</td>
+</tr>
+<tr class="even">
+<td>catch rate <code>.63</code></td>
+<td>simulation fit</td>
+<td>Same missing-position fallback.</td>
+</tr>
+<tr class="odd">
+<td>yards/reception <code>10.5</code>, yards/carry <code>4.2</code></td>
+<td>simulation fit</td>
+<td>Same missing-position fallback.</td>
+</tr>
+<tr class="even">
+<td>rec. TD rate <code>.045</code>, rush TD rate <code>.025</code></td>
+<td>simulation fit</td>
+<td>Same missing-position fallback.</td>
+</tr>
+<tr class="odd">
+<td>targetable-pass rate <code>.64</code></td>
+<td>simulation fit / data fallback</td>
+<td>No usable targetable-pass rate or raw pass attempts.</td>
+</tr>
+<tr class="even">
+<td>team pass/rush <code>34</code>, <code>25</code></td>
+<td>simulate</td>
+<td>A caller supplies no team-volume feature at all. Real roster
+projections do not use these.</td>
+</tr>
+<tr class="odd">
+<td>role uncertainty <code>.50</code></td>
+<td>simulate</td>
+<td>A caller supplies no role-uncertainty feature. Real feature-builder
+output does.</td>
+</tr>
+<tr class="even">
+<td>usage-volatility <code>.20</code></td>
+<td>feature builder</td>
+<td>A player has no usable volatility measurement.</td>
+</tr>
+<tr class="odd">
+<td>position-normal residual SD <code>7.0</code></td>
+<td>baseline</td>
+<td>A position has no fitted residual scale. Baseline only.</td>
+</tr>
+</tbody>
+</table>
+<p>The probability clip <code>.001–.999</code>, minimum beta
+concentration <code>.4</code>, minimum gamma mean <code>.05</code>,
+minimum gamma CV <code>.08</code>, and final uncertainty clip
+<code>.02–1.00</code> are numerical-validity safeguards. The uncertainty
+display labels also use arbitrary cut points: low below
+<code>.33</code>, medium below <code>.66</code>, high at or above
+<code>.66</code>; those labels do not affect the simulations.</p>
+<h2 id="exact-formulas">Exact formulas</h2>
+<h3 id="recency-weighting">Recency weighting</h3>
+<p>For target season T and historical season s:</p>
+<pre class="text"><code>raw_weight = 0.60 ^ (T - s)
+weighted_rate = sum(raw_weight times observation) / sum(raw_weight)</code></pre>
+<p>The decay applies to every player-game row, not once per season. A
+season’s total contribution is therefore its games played multiplied by
+its per-game decay. For three 17-game seasons (2023–25), the normalized
+weights are 18.4%, 30.6%, and 51.0%. McCaffrey’s 2026 target-share
+calculation has a larger 2025 share because he played only four games in
+2024: 2021: 3.1%, 2022: 12.4%, 2023: 19.4%, 2024: 8.1%, and 2025:
+57.2%.</p>
+<h3 id="shrinkage">Shrinkage</h3>
+<pre class="text"><code>effective_strength = strength times max(0, 1 - player_games / 48)
+shrunken_rate = (player_games times player_rate + effective_strength times position_rate)
+                / (player_games + effective_strength)</code></pre>
+<p>Strength is 14 for shares, 20 for efficiency, and 30 for TD rates.
+These act like pseudo-games, not literal games, and taper away for
+established players.</p>
+<h3 id="expected-team-volume">Expected team volume</h3>
+<p>There is no separate learned team-volume model. For each 2026
+player:</p>
+<pre class="text"><code>expected_pass = mean(one row per destination-team game in 2025)
+expected_rush = mean(one row per destination-team game in 2025)</code></pre>
+<p>QB attempts/carries are included. The code deduplicates to one
+season, week, team row before averaging. SF’s 2025 values are 33.76 pass
+attempts and 28.29 rush attempts across 17 games. Manual input overrides
+this baseline.</p>
+<p>The simulation adds variance:</p>
+<pre class="text"><code>pass attempts = Poisson(Gamma(mean=expected_pass, CV=.18))
+rush attempts = Poisson(Gamma(mean=expected_rush, CV=.20))</code></pre>
+<p>For a Gamma-Poisson variable with mean m and latent CV c, approximate
+variance is m plus (c times m) squared. SF’s pass-attempt standard
+deviation is about 8.41, not zero.</p>
+<h3 id="role-uncertainty">Role uncertainty</h3>
+<pre class="text"><code>sample_penalty = max(0, 1 - min(games, 32) / 32)
+instability = min(target_share_sd / .25, 1)
+
+uncertainty = max(manual_override,
+    .08 + .32 times sample_penalty + .22 times team_change
+        + .22 times rookie + .12 times instability)</code></pre>
+<p>The .08 is a stable-veteran floor; 32 is roughly two full seasons;
+.32, .22, .22, and .12 are heuristic penalties; .25 is the target-share
+SD considered maximally unstable. None are fitted weights.</p>
+<pre class="text"><code>role_concentration = 70 times (1 - uncertainty) + 5</code></pre>
+<p>Lower concentration gives a wider beta-binomial target/carry
+share.</p>
+<h2 id="values-that-are-not-modeling-assumptions">Values that are not
+modeling assumptions</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Value</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1 reception plus .1 yards plus 6 TDs</td>
+<td>Full-PPR scoring convention.</td>
+</tr>
+<tr class="even">
+<td>P10/P25/P50/P75/P90</td>
+<td>Requested forecast outputs.</td>
+</tr>
+<tr class="odd">
+<td>10, 15, 20</td>
+<td>Product threshold probabilities only.</td>
+</tr>
+<tr class="even">
+<td>20,000 current simulations</td>
+<td>Monte Carlo precision/compute choice.</td>
+</tr>
+<tr class="odd">
+<td>Normal z-scores in the normal baseline</td>
+<td>Mathematical standard-normal quantiles, not tuned.</td>
+</tr>
+<tr class="even">
+<td>100 neighbors and .08 distance floor</td>
+<td>Nearest-neighbor baseline only, not production forecast.</td>
+</tr>
+<tr class="odd">
+<td>.001 to .999 probability, .4 concentration, .05 gamma mean, .08
+gamma CV floors</td>
+<td>Numerical safeguards for sparse/bad data.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="calibration-does-and-does-not-fix-this">Calibration does and
+does not fix this</h2>
+<p>The output uses walk-forward conformal calibration: it adjusts final
+quantiles using completed historical Week 1 residuals. That improved 80%
+coverage from 74.9% raw to 83.0% in the backtest. It makes final
+intervals more honest, but does not prove internal values above are
+optimal.</p>
+<h2 id="tuning-order">Tuning order</h2>
+<ol type="1">
+<li>Replace targetable-pass fallback/clip and historical team volume
+with play-level opportunities plus dated totals/spreads.</li>
+<li>Fit role-uncertainty weights and beta concentration to future
+target/carry share variance.</li>
+<li>Tune recency decay and shrinkage strengths through nested
+walk-forward pinball loss and coverage.</li>
+<li>Fit yardage and TD residual distributions by position/opportunity
+tier.</li>
+</ol>
+<p>The proper claim today is: transparent priors plus calibrated output
+intervals, not fully learned internal parameters.</p>
+</body>
+</html>
