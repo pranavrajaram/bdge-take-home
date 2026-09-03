@@ -1,19 +1,14 @@
 # Demo script: Week 1 Fantasy Range Projections
 
-Use this as an 8–9 minute video script. The spoken words are conversational;
+Use this as a 9–10 minute video script. The spoken words are conversational;
 the italic Show notes describe what to put on screen.
 
 ## Before recording
 
-Open these pages in order:
-
-1. docs/week1_projection_demo.html
-2. docs/projections.html
-3. docs/methodology.html
-4. docs/hyperparameters.html
-
-Start on the main demo page. Keep the projection page available for a quick
-player lookup and use the Puka calculation widget when prompted below.
+Keep `docs/week1_projection_demo.html` on screen for nearly the entire video.
+Open `docs/projections.html` in another tab only if you want to show the full
+player pool. The walkthrough now contains the important methodology, the
+evaluation explanation, and the Puka calculation widget.
 
 ## 0:00 — What this project does
 
@@ -29,8 +24,8 @@ player lookup and use the Puka calculation widget when prompted below.
 > enters the simulation, how I check the ranges historically, and finally what
 > the current Week 1 output looks like.
 
-*Show: the top of week1_projection_demo.html. Point briefly to the six steps
-and the supporting-page links.*
+*Show: the top of week1_projection_demo.html. Point briefly to the seven steps
+and explain that this is the main page for the whole demo.*
 
 ## 0:35 — Why this is not a traditional ML model
 
@@ -60,7 +55,7 @@ and the supporting-page links.*
 > the simpler baselines. They are just not used as a shortcut inside the
 > production prior.
 
-*Show: the Step 4 simulation sequence. Say “these are the parts of fantasy
+*Show: the Step 5 simulation sequence. Say “these are the parts of fantasy
 points that the model estimates separately.”*
 
 ## 1:35 — Step 1: Data and the player pool
@@ -132,7 +127,30 @@ destination-team-volume formula.*
 
 *Show: Step 3’s uncertainty rule and the McCaffrey / Coleman table.*
 
-## 4:45 — Step 4: From football events to fantasy points
+## 4:45 — Step 4: Matchup adjustment
+
+> The next input is the Week 1 opponent. This is intentionally a small part of
+> the forecast, not a magic defense ranking.
+>
+> For every opponent and position, I calculate prior PPR points allowed, pull
+> that number toward the league average, and cap the final effect between an
+> 8% decrease and an 8% increase. So the adjustment can refine a projection,
+> but it cannot overwhelm a player's role and volume.
+>
+> That choice is deliberate. A defense can change a lot over an offseason, and
+> “good defense” is too broad anyway. The relevant question is whether that
+> defense has been easier or harder for this player's position. For example,
+> Puka gets a nearly neutral 1.015 multiplier against San Francisco, while
+> McCaffrey gets a 0.927 multiplier against the Rams.
+>
+> A more ambitious version could use betting totals, injuries, pass rush,
+> coverage data, and weather. I would add those as dated inputs and test each
+> addition separately. For this version, I wanted the matchup effect to be
+> real, visible, and modest.
+
+*Show: Step 4, including the two matchup examples.*
+
+## 5:30 — Step 5: From football events to fantasy points
 
 > The core model simulates the football events in order: team pass and rush
 > attempts, player targets and carries, receptions, yards, touchdowns, and
@@ -147,19 +165,20 @@ destination-team-volume formula.*
 
 *Show: scroll to the calculation widget and choose Puka Nacua, WR / LA.*
 
-> These are real means from 100,000 raw simulation draws. Puka averages 8.63
+> These are real means from 100,000 simulation draws. Puka averages 8.63
 > targets and 6.28 receptions. The simulated mean stat line has 82.47
 > receiving yards, 2.53 rushing yards, and 0.44 total touchdowns.
 >
 > The scoring line makes the result auditable: 6.28 reception points, 8.50
 > yardage points, and 2.62 touchdown points, for a 17.40 raw mean.
 >
-> The raw median is 15.80. The reported P50 is 15.78 after calibration. The
+> Puka's matchup adjustment takes the component mean from 17.40 to 17.66. The
+> raw median is 16.03. The reported P50 is 16.04 after calibration. The
 > mean is higher than the median because touchdowns create occasional large
 > outcomes, which pull the average up. That is why a range is more useful than
 > presenting only one number.
 
-## 6:00 — Step 5: Are the ranges honest?
+## 6:45 — Step 6: Are the ranges honest?
 
 > A range model should be judged on more than whether its middle estimate is
 > close. It also has to be honest about uncertainty.
@@ -190,35 +209,53 @@ destination-team-volume formula.*
 *Show: the How to read the results table, the calibration explanation, then
 the walk-forward backtest table. Optionally open the calibration plot.*
 
-## 7:25 — Step 6: Current projections and takeaway
+## 8:10 — Step 7: Current projections and design choices
 
 > The current output is the same process applied to the active 2026 Week 1
 > pool.
 >
-> The table gives P10, P25, P50, P75, P90, threshold probabilities, and role
-> uncertainty. The P50 is the best concise center. P10 and P90 are plausible
-> low- and high-end outcomes, not guarantees.
+> The full table has more columns, but the main page focuses on P10, P50, and
+> P90. The P50 is the best concise center. P10 and P90 are plausible low and
+> high outcomes, not guarantees.
 >
-> For example, Puka’s current P50 is 15.78, with a P10 of 6.37 and a P90 of
-> 33.18. That is a concise statement of both opportunity and risk. Bijan’s
-> mean is 17.89 and his P50 is 16.38; the difference again reflects
+> For example, Puka’s current P50 is 16.04, with a P10 of 6.46 and a P90 of
+> 33.54. That is a concise statement of both opportunity and risk. Bijan’s
+> mean is 16.78 and his P50 is 15.50; the difference again reflects
 > right-skewed touchdown outcomes.
 >
 > The full 422-player table is available here, sorted by mean across
 > positions. The methodology page documents the data and functions behind each
 > stage, and the hyperparameter page makes the modeling choices explicit.
 
-*Show: Complete projections, then point out the links to Methodology and
-Hyperparameters.*
+*Show: the selected projections table, then the Puka widget. Only open the
+full player table if you want to answer a player-specific question.*
 
-## 8:15 — Close
+## 9:00 — Close: what I chose and what I would test next
 
 > The key contribution here is not claiming to know Week 1 perfectly. It is a
 > transparent process: build as-of priors, simulate the football events that
 > produce points, represent workload uncertainty directly, and measure whether
 > the reported ranges behave honestly in historical holdouts.
 >
-> The next improvements would be dated depth-chart and injury inputs,
-> opponent and team-total context, and a play-level replacement for the
-> targetable-pass proxy. Those would make the priors more informed while
-> preserving the same auditable simulation and evaluation framework.
+> I also do not think this is the only reasonable modeling choice. A direct
+> quantile machine learning model, for example, could be a useful challenger.
+> It might find interactions that this component model misses. The tradeoff is
+> that Week 1 has limited historical examples, and it becomes harder to explain
+> whether a forecast moved because of role, volume, or a hidden correlation in
+> the training data. I would treat that model as a benchmark or an ensemble
+> candidate, not assume it wins because it is more complicated.
+>
+> The same is true for consensus rankings. They can add useful information,
+> especially around current depth charts and injuries. Rather than replacing
+> this model with a ranking, I would use a dated consensus forecast as a
+> separate center input and test whether it improves the result out of sample.
+>
+> If I had another iteration, my first additions would be a reviewed depth
+> chart and injury file, team total and spread inputs, and better route and
+> red zone measures. I would add them one at a time, rerun the walk forward
+> evaluation, and keep only the additions that improve accuracy or calibration.
+>
+> So the takeaway is not “this number is right.” It is: here is what the model
+> believes, here is why it believes it, how uncertain it is, and how I checked
+> those claims against earlier Week 1s. That gives a user something they can
+> inspect and improve, rather than a score they simply have to trust.
