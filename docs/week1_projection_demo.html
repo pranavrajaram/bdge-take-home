@@ -37,6 +37,9 @@
 .calc-stat{min-width:82px;padding-left:10px;border-left:1px solid #d8e0e8;color:#5f6c7b;font-size:12px}
 .calc-stat b{display:block;color:#18212f;font-size:15px;line-height:1.2}
 .calc-body .df{margin-top:12px}
+.article-rules{margin:16px 0;padding:13px 14px;border:1px solid #d8e0e8;background:#f8fafc}
+.article-rules p{margin:0 0 10px}.article-rules p:last-child{margin-bottom:0}
+.article-rules b{color:#18212f}
 @media(max-width:760px){.summary-grid,.grid{grid-template-columns:1fr}.df th,.df td{padding:6px 7px;font-size:11.5px}.calc-controls{align-items:flex-start;flex-direction:column}.calc-controls select{min-width:0}.calc-player{width:100%;margin-bottom:2px}.calc-stat{padding-left:0;border-left:0}}
 </style>
 </head>
@@ -58,10 +61,8 @@
 <section id="data">
 <div class="kicker">Step 1</div><h2>Build the historical player table</h2>
 <p class="lead">The starting table has one row for each player in each game from 2021 through 2025. The important idea is to separate a player’s share of team work from the total work available to that team.</p>
-<div class="grid">
 <div class="df"><table><caption>Historical data used for the forecast</caption><thead><tr><th>Seasons</th><th>Positions</th><th>Scoring</th></tr></thead><tbody><tr><td>2021–2025</td><td>RB, WR, TE</td><td>1 PPR, 0.1 yards, 6 TD</td></tr></tbody></table></div>
 <div class="note"><b>Why start with football events?</b> Past fantasy scores mix volume, efficiency, touchdowns, and game context. This model estimates those pieces separately, then adds them under the scoring rules.</div>
-</div>
 <div class="work"><div class="work-head">Create the team opportunity pools</div><pre>team_targets       = sum(targets)
 team_rush_attempts = sum(carries)
 team_pass_attempts = sum(QB attempts)
@@ -74,10 +75,8 @@ rush_share   = player_carries / team_rush_attempts</pre></div>
 <section id="priors">
 <div class="kicker">Step 2</div><h2>Create player priors</h2>
 <p class="lead">A Week 1 forecast cannot use Week 1 usage. It starts with what the player did in completed seasons, gives recent seasons more weight, and uses the player’s new team for the amount of team work available.</p>
-<div class="grid">
-<div><h3>Recent seasons matter more</h3><div class="formula">weight for a 2025 game = 0.60 ^ 1<br>weight for a 2024 game = 0.60 ^ 2</div><p>For three equal length seasons, the latest season provides 51% of the total weight. This reacts to a player’s current role without discarding earlier evidence.</p></div>
-<div><h3>Small samples borrow from the position</h3><div class="formula">used rate = player history + position average<br>the position average fades out by 48 prior games</div><p>A rookie needs an RB, WR, or TE starting point. An established player is allowed to remain close to his own history.</p></div>
-</div>
+<div class="article-rules"><p><b>Recent seasons matter more.</b> For three equal length seasons, the latest supplies 51% of the total weight, so a player’s current role matters without erasing earlier evidence.</p><p><b>Small samples borrow from the position.</b> A rookie starts near the RB, WR, or TE average; that pull fades out by 48 prior games.</p></div>
+<div class="formula">weight for a 2025 game = 0.60 ^ 1<br>weight for a 2024 game = 0.60 ^ 2</div>
 <div class="df"><table><caption>McCaffrey target share: the actual prior used in the simulation</caption><thead><tr><th>Input</th><th>Value</th><th>What it means</th></tr></thead><tbody><tr><td>Player target share</td><td>.217</td><td>Recent seasons, weighted game by game</td></tr><tr><td>RB average</td><td>.064</td><td>Starting point when a player has little evidence</td></tr><tr><td>Prior games</td><td>61</td><td>Enough evidence that the RB average no longer pulls the rate</td></tr><tr><td>Rate used</td><td>.217</td><td>McCaffrey’s own rate enters the simulation</td></tr></tbody></table></div>
 <div class="df"><table><caption>Team volume for a 2026 San Francisco player</caption><thead><tr><th>Input</th><th>Value</th><th>Source</th></tr></thead><tbody><tr><td>Expected pass attempts</td><td>33.76</td><td>Mean across San Francisco’s 17 games in 2025</td></tr><tr><td>Expected rush attempts</td><td>28.29</td><td>Mean across San Francisco’s 17 games in 2025</td></tr></tbody></table></div>
 <p class="note"><b>Important:</b> the model does not feed a player’s old fantasy point total back into the forecast. Fantasy points are held out for evaluation; the player priors are workload and efficiency rates.</p>
@@ -86,13 +85,11 @@ rush_share   = player_carries / team_rush_attempts</pre></div>
 <section id="role">
 <div class="kicker">Step 3</div><h2>Represent role uncertainty</h2>
 <p class="lead">A player can have a reasonable expected role without having a certain role. The model widens the possible target and carry shares for rookies, players on a new team, and players with limited or unstable history.</p>
-<div class="grid">
 <div class="work"><div class="work-head">Role score used by the model</div><pre>uncertainty = sample size + team change
               + rookie status + past share volatility
 
 share concentration = 70 × (1 - uncertainty) + 5</pre></div>
 <div class="note"><b>What this changes:</b> it does not add arbitrary fantasy points. It makes the possible role wider before targets and carries are drawn, which naturally widens the final PPR range.</div>
-</div>
 <div class="df"><table><caption>Same position, different certainty about workload</caption><thead><tr><th>Player</th><th>Prior games</th><th>New team or rookie?</th><th>Role uncertainty</th><th>Interpretation</th></tr></thead><tbody><tr><td>Christian McCaffrey</td><td>61</td><td>No</td><td>.121</td><td>His share stays fairly close to recent usage in most draws</td></tr><tr><td>Jonah Coleman</td><td>0</td><td>Rookie</td><td>.716</td><td>His possible share runs from small to meaningful</td></tr></tbody></table></div>
 </section>
 
@@ -111,13 +108,10 @@ share concentration = 70 × (1 - uncertainty) + 5</pre></div>
 team rush attempts → player carries
 receptions and carries → yards and touchdowns
 PPR points = receptions + 0.1 × yards + 6 × touchdowns</pre></div>
-<div class="note"><b>What happens inside each draw:</b> the model first draws team pass and rush attempts, then the player’s target and carry shares. Higher role uncertainty makes those shares less predictable. It turns the shares into targets and carries, then draws receptions, yards, and touchdowns before scoring the stat line in PPR and applying the small matchup adjustment.</div>
-<p>The opportunity draws use a beta binomial distribution. In plain terms, a basic binomial model assumes a player has the same chance of a target on every play; the beta binomial lets that chance vary from one simulated game to the next, which better reflects an uncertain role. Yardage uses a gamma distribution, which keeps the simulated values positive and allows occasional larger games.</p>
-<div class="grid">
+<div class="note"><b>Inside a draw:</b> higher role uncertainty makes the possible target and carry shares wider. The beta binomial lets a player’s chance of an opportunity change from one simulated game to the next; gamma yardage keeps yardage positive while allowing occasional larger games.</div>
 <div class="df"><table><caption>McCaffrey inputs before random draws</caption><thead><tr><th>Input</th><th>Value</th></tr></thead><tbody><tr><td>Team pass attempts</td><td>33.76</td></tr><tr><td>Team rush attempts</td><td>28.29</td></tr><tr><td>Target share</td><td>.217</td></tr><tr><td>Rush share</td><td>.620</td></tr><tr><td>Catch rate</td><td>.815</td></tr></tbody></table></div>
 <div class="note"><b>Target pool:</b> team pass attempts are converted into the pool of recorded targets using the historical team targets per pass attempt rate; the player’s target share is taken from that pool.</div>
-</div>
-<p class="note"><b>Why simulate instead of fit one large machine learning model?</b> There are not many true Week 1 examples, and a direct model can conceal why a projection moved. This approach is easier to inspect: a change in volume, role, efficiency, touchdown rate, or matchup has a clear place in the calculation.</p>
+<p class="note"><b>Why simulate instead of fit one large machine learning model?</b> There are few true Week 1 examples, and a direct model can hide why a forecast moved. Here, each change has a visible source: volume, role, efficiency, touchdowns, or matchup.</p>
 </section>
 
 <section id="evaluation">
