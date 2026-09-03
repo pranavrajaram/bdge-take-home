@@ -111,6 +111,8 @@ share concentration = 70 × (1 - uncertainty) + 5</pre></div>
 team rush attempts → player carries
 receptions and carries → yards and touchdowns
 PPR points = receptions + 0.1 × yards + 6 × touchdowns</pre></div>
+<div class="note"><b>What happens inside each draw:</b> the model first draws team pass and rush attempts, then the player’s target and carry shares. Higher role uncertainty makes those shares less predictable. It turns the shares into targets and carries, then draws receptions, yards, and touchdowns before scoring the stat line in PPR and applying the small matchup adjustment.</div>
+<p>The opportunity draws use a beta binomial distribution. In plain terms, a basic binomial model assumes a player has the same chance of a target on every play; the beta binomial lets that chance vary from one simulated game to the next, which better reflects an uncertain role. Yardage uses a gamma distribution, which keeps the simulated values positive and allows occasional larger games.</p>
 <div class="grid">
 <div class="df"><table><caption>McCaffrey inputs before random draws</caption><thead><tr><th>Input</th><th>Value</th></tr></thead><tbody><tr><td>Team pass attempts</td><td>33.76</td></tr><tr><td>Team rush attempts</td><td>28.29</td></tr><tr><td>Target share</td><td>.217</td></tr><tr><td>Rush share</td><td>.620</td></tr><tr><td>Catch rate</td><td>.815</td></tr></tbody></table></div>
 <div class="note"><b>Target pool:</b> team pass attempts are converted into the pool of recorded targets using the historical team targets per pass attempt rate; the player’s target share is taken from that pool.</div>
