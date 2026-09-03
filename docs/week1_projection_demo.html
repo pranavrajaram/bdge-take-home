@@ -25,7 +25,19 @@
 .calibration-figure{margin:18px 0;border:1px solid #d8e0e8;background:#fff;padding:14px}
 .calibration-figure img{display:block;width:100%;max-width:650px;margin:0 auto}
 .calibration-figure figcaption{max-width:650px;margin:10px auto 0;font-size:13px;color:#475467}
-@media(max-width:760px){.summary-grid,.grid{grid-template-columns:1fr}.df th,.df td{padding:6px 7px;font-size:11.5px}}
+.calc-widget{margin-top:16px;border:1px solid #d8e0e8;background:#fff}
+.calc-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid #d8e0e8;background:#f6f8fa;font-size:13px}
+.calc-controls label{display:flex;align-items:center;gap:8px;font-weight:700}
+.calc-controls select{min-width:220px;padding:5px 30px 5px 8px;border:1px solid #b9c4d1;border-radius:4px;background:#fff;color:#18212f;font:inherit}
+.calc-diagnostic{color:#5f6c7b;font:12px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace}
+.calc-body{padding:0 14px 14px}
+.calc-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 0 1px}
+.calc-player{margin-right:6px;color:#18212f;font-size:18px;line-height:1.1}
+.calc-player span{margin-left:6px;color:#5f6c7b;font-size:13px;font-weight:500}
+.calc-stat{min-width:82px;padding-left:10px;border-left:1px solid #d8e0e8;color:#5f6c7b;font-size:12px}
+.calc-stat b{display:block;color:#18212f;font-size:15px;line-height:1.2}
+.calc-body .df{margin-top:12px}
+@media(max-width:760px){.summary-grid,.grid{grid-template-columns:1fr}.df th,.df td{padding:6px 7px;font-size:11.5px}.calc-controls{align-items:flex-start;flex-direction:column}.calc-controls select{min-width:0}.calc-player{width:100%;margin-bottom:2px}.calc-stat{padding-left:0;border-left:0}}
 </style>
 </head>
 <body>
@@ -123,7 +135,7 @@ PPR points = receptions + 0.1 × yards + 6 × touchdowns</pre></div>
 <h3>Worked final calculation</h3>
 <p>Choose a player. The widget shows the mean football stats from 100,000 draws, the PPR scoring arithmetic, the matchup adjustment, and the reported calibrated P50.</p>
 <div class="calc-widget">
-  <div class="calc-controls"><label for="calc-player">Player <select id="calc-player"></select></label><span>100,000 simulation diagnostic</span></div>
+  <div class="calc-controls"><label for="calc-player">Player <select id="calc-player"></select></label><span class="calc-diagnostic">100,000 simulation diagnostic</span></div>
   <div id="calc-body" class="calc-body"></div>
 </div>
 <div class="resource-links"><strong>Explore the output</strong><a href="projections.html">Full player table</a><a href="projections.csv">Download CSV</a><a href="methodology.html">Detailed methodology</a></div>
@@ -149,7 +161,8 @@ PPR points = receptions + 0.1 × yards + 6 × touchdowns</pre></div>
     const yards = player.receiving_yards + player.rushing_yards;
     const touchdowns = player.receiving_tds + player.rushing_tds;
     body.innerHTML =
-      '<div class="calc-meta"><strong>' + player.player + '</strong><span>targets: ' + fmt(player.targets) + '</span><span>carries: ' + fmt(player.carries) + '</span></div>' +
+      '<div class="calc-meta"><div class="calc-player"><strong>' + player.player + '</strong><span>' + player.position + ' · ' + player.team + '</span></div>' +
+      '<div class="calc-stat">Targets<b>' + fmt(player.targets) + '</b></div><div class="calc-stat">Carries<b>' + fmt(player.carries) + '</b></div></div>' +
       '<div class="df"><table><caption>Football stats to PPR points</caption><thead><tr><th>Scoring part</th><th>Mean stat line</th><th>Points</th></tr></thead><tbody>' +
       '<tr><td>Receptions</td><td>' + fmt(player.receptions) + ' × 1</td><td>' + fmt(player.reception_points) + '</td></tr>' +
       '<tr><td>Yards</td><td>' + fmt(yards) + ' × .10</td><td>' + fmt(player.yardage_points) + '</td></tr>' +
