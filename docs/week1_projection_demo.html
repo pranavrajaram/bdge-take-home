@@ -9,6 +9,24 @@
 /* Correct the summary layout after the base grid declaration. */
 .summary-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin:22px 0 2px}
 </style>
+<style>
+/* Layout repair: keep the walkthrough's data tables compact and readable. */
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:22px 0 2px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;align-items:start}
+.df{margin:15px 0;overflow-x:auto;border:1px solid #d8e0e8;background:#fff}
+.df table{width:100%;border-collapse:collapse;table-layout:auto;font:12.5px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace}
+.df caption{padding:9px 11px;text-align:left;border-bottom:1px solid #d8e0e8;background:#f6f8fa;color:#445267;font:700 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase}
+.df th,.df td{padding:7px 9px;border-bottom:1px solid #edf1f5;white-space:normal}
+.df th{background:#fbfcfd;color:#344054;font-weight:700;text-align:right}
+.df td{text-align:right}
+.df th:first-child,.df td:first-child{text-align:left}
+.df tbody tr:nth-child(even){background:#fafbfc}
+.df tbody tr:last-child td{border-bottom:0}
+.calibration-figure{margin:18px 0;border:1px solid #d8e0e8;background:#fff;padding:14px}
+.calibration-figure img{display:block;width:100%;max-width:650px;margin:0 auto}
+.calibration-figure figcaption{max-width:650px;margin:10px auto 0;font-size:13px;color:#475467}
+@media(max-width:760px){.summary-grid,.grid{grid-template-columns:1fr}.df th,.df td{padding:6px 7px;font-size:11.5px}}
+</style>
 </head>
 <body>
 <main class="page">
