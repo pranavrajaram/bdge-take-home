@@ -21,6 +21,8 @@ estimated by an optimizer.
 | .42, .38 | simulate | Gamma CV for receiving yards/reception and rushing yards/carry. | Heuristic. Estimate by position/opportunity tier. |
 | .64, .45, .82 | data.py, simulation.py | Targetable-pass fallback and lower/upper guardrails. | Data-quality heuristic. Material: the RB rate reaches the .82 ceiling. |
 | 1.2, 1.0 | simulate | Caps receiving/rushing TD Poisson rates. | Guardrails against malformed input, not football laws. |
+| 12 | features.py, matchup prior | League-average pseudo-games added to each defense-position points-allowed rate. | Heuristic shrinkage for noisy defense performance; tune only through walk-forward validation. |
+| .92, 1.08 | features.py, simulation.py | Lower and upper bounds for the Week 1 opponent multiplier. | Intentional ±8% cap: matchup should refine a forecast, not dominate it. |
 
 ## Fallback values that normally do not affect the real 2026 run
 

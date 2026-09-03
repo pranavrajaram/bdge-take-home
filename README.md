@@ -17,7 +17,7 @@ The model works from football events to fantasy points instead of predicting pri
 
 `team pass/rush attempts → player opportunity share → targets/carries → catches/yards/TDs → PPR points`
 
-Each stage is simulated many times. This lets a player with a stable role receive a narrower range than a rookie, a team changer, or a player whose prior usage was volatile. Historical player rates are shrunk toward position-level evidence when a player has a limited sample, and recent seasons receive more weight than older ones.
+Each stage is simulated many times. This lets a player with a stable role receive a narrower range than a rookie, a team changer, or a player whose prior usage was volatile. Historical player rates are shrunk toward position-level evidence when a player has a limited sample, and recent seasons receive more weight than older ones. A known Week 1 opponent adds a small, position-specific adjustment based on prior fantasy points allowed, with heavy league-average shrinkage and a ±8% cap.
 
 Past fantasy points are used only as held-out labels when evaluating forecasts. They are not a model input. Modeling the components makes the calculation inspectable and avoids treating a previous final score as a durable skill independent of volume, role, and touchdowns.
 

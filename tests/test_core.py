@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from fantasy_ranges.data import load_player_games, normalize_player_games
+from fantasy_ranges.data import load_player_games, normalize_player_games, week1_matchups_from_schedule
 from fantasy_ranges.demo import synthetic_games
 from fantasy_ranges.features import RECENCY_DECAY, _weighted_mean, build_preseason_features
 from fantasy_ranges.simulation import ComponentSimulator
@@ -70,6 +70,33 @@ def test_destination_team_volume_averages_one_row_per_game():
     candidate = pd.DataFrame([{"player_id": "rb", "player_name": "RB", "position": "RB", "team": "AAA"}])
     feature = build_preseason_features(games, candidate, 2026).iloc[0]
     assert feature["expected_team_pass_attempts"] == 30
+
+
+def test_matchup_multiplier_is_position_specific_and_bounded():
+    rows = []
+    for week in range(1, 5):
+        # DEF was soft against RBs but ordinary against WRs in the prior year.
+        rows.extend([
+            {"player_id": f"rb_{week}", "player_display_name": "RB", "position": "RB", "team": "OFF", "opponent": "DEF", "season": 2025, "week": week, "carries": 12, "rushing_yards": 120, "fantasy_points_ppr": 18},
+            {"player_id": f"wr_{week}", "player_display_name": "WR", "position": "WR", "team": "OFF", "opponent": "DEF", "season": 2025, "week": week, "targets": 5, "receptions": 3, "receiving_yards": 30, "fantasy_points_ppr": 6},
+            {"player_id": f"rb_league_{week}", "player_display_name": "RB", "position": "RB", "team": "ALT", "opponent": "AVG", "season": 2025, "week": week, "carries": 10, "rushing_yards": 60, "fantasy_points_ppr": 8},
+            {"player_id": f"wr_league_{week}", "player_display_name": "WR", "position": "WR", "team": "ALT", "opponent": "AVG", "season": 2025, "week": week, "targets": 5, "receptions": 3, "receiving_yards": 30, "fantasy_points_ppr": 6},
+        ])
+    games = normalize_player_games(pd.DataFrame(rows))
+    candidates = pd.DataFrame([
+        {"player_id": "new_rb", "player_name": "New RB", "position": "RB", "team": "OFF", "opponent": "DEF"},
+        {"player_id": "new_wr", "player_name": "New WR", "position": "WR", "team": "OFF", "opponent": "DEF"},
+    ])
+    features = build_preseason_features(games, candidates, 2026).set_index("position")
+    assert 1.0 < features.at["RB", "matchup_multiplier"] <= 1.08
+    assert features.at["WR", "matchup_multiplier"] == pytest.approx(1.0)
+
+
+def test_week1_matchups_are_mapped_both_directions():
+    schedule = pd.DataFrame([{"season": 2026, "week": 1, "game_type": "REG", "home_team": "AAA", "away_team": "BBB"}])
+    matchups = week1_matchups_from_schedule(schedule, 2026).set_index("team")
+    assert matchups.at["AAA", "opponent"] == "BBB"
+    assert matchups.at["BBB", "opponent"] == "AAA"
 
 
 def test_role_uncertainty_propagates_to_wider_outcomes():

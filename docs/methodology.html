@@ -264,9 +264,31 @@ pool. A manually supplied team-volume input overrides this baseline.</p>
 turns the pass mean into a Gamma-Poisson draw (18% latent-volume
 coefficient of variation) and the rush mean into a Gamma-Poisson draw
 (20% CV), then draws the actual game’s attempts from those rates.
-Team-total/spread, opponent, QB, and coaching projections are not
-currently included and should be added as dated, auditable
-overrides.</p>
+Team-total/spread, QB, and coaching projections are not currently
+included and should be added as dated, auditable overrides.</p>
+<h3 id="week-1-opponent-adjustment">Week 1 opponent adjustment</h3>
+<p>The schedule is known before the season, so each candidate is joined
+to its Week 1 opponent from nflverse’s schedule file. The model then
+measures what that defense allowed to the player’s
+<strong>position</strong> in completed seasons. It does not call a
+defense generally “good” or “bad”: an opponent can be soft against RBs
+and average against WRs.</p>
+<p>For each defense-position pair, the code first sums all fantasy
+points allowed in each game, then averages those game totals within
+season. Those season-level rates use the same 0.60 recency decay as
+player priors. The resulting rate is shrunk with 12 league-average games
+and converted into a multiplier:</p>
+<pre class="text"><code>shrunk_allowed = (defense_games × defense_allowed + 12 × league_allowed)
+                  / (defense_games + 12)
+matchup_multiplier = clip(shrunk_allowed / league_allowed, 0.92, 1.08)</code></pre>
+<p>A value of <code>1.05</code> raises every simulated fantasy-point
+outcome by 5%; <code>0.96</code> lowers it by 4%. The cap deliberately
+keeps this a small adjustment: last season’s defense is useful signal,
+not a claim that the same roster and scheme will repeat exactly. If a
+schedule or opponent is unavailable, the multiplier is <code>1.00</code>
+and the output marks it as league-neutral. The production CSV shows the
+opponent, multiplier, source, defense’s historical allowed rate, and the
+league comparison so the adjustment is auditable.</p>
 <table>
 <colgroup>
 <col style="width: 25%" />
@@ -296,6 +318,21 @@ overrides.</p>
 <td>Enforces <code>season &lt; target_season</code>, shrinks small
 samples, identifies team changes, and assigns destination-team
 volume.</td>
+</tr>
+<tr class="odd">
+<td>Build defensive matchup prior</td>
+<td><code>src/fantasy_ranges/features.py</code></td>
+<td><code>_matchup_priors</code></td>
+<td>Builds the shrunk, capped position-specific opponent
+multiplier.</td>
+</tr>
+<tr class="even">
+<td>Join known Week 1 opponents</td>
+<td><code>src/fantasy_ranges/data.py</code></td>
+<td><code>fetch_schedule</code>,
+<code>week1_matchups_from_schedule</code></td>
+<td>Loads nflverse schedule data and maps every team to its Week 1
+opponent.</td>
 </tr>
 </tbody>
 </table>
@@ -330,7 +367,8 @@ uncertainty means a wider draw.</li>
 receptions/carries.</li>
 <li>Draw receiving and rushing touchdowns using strongly shrunk TD
 rates.</li>
-<li>Convert the resulting stat line to PPR fantasy points.</li>
+<li>Convert the resulting stat line to PPR fantasy points, then apply
+the small opponent multiplier when a known matchup is available.</li>
 </ol>
 <p>The code uses beta-binomial draws for opportunities. In everyday
 terms, a plain binomial model acts as if a player’s chance of a target
@@ -492,12 +530,12 @@ coverage chart.</p>
 <h2 id="how-to-refresh-actual-week-1-projections">How to refresh actual
 Week 1 projections</h2>
 <p>Run this from the activated project virtual environment:</p>
-<div class="sourceCode" id="cb2"><pre
-class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">fantasy-ranges</span> project-week1 <span class="dt">\</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--input</span> data/raw/player_games.csv <span class="dt">\</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--season</span> 2026 <span class="dt">\</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--out-dir</span> outputs/week1_2026 <span class="dt">\</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--simulations</span> 20000</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">fantasy-ranges</span> project-week1 <span class="dt">\</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">--input</span> data/raw/player_games.csv <span class="dt">\</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">--season</span> 2026 <span class="dt">\</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">--out-dir</span> outputs/week1_2026 <span class="dt">\</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">--simulations</span> 20000</span></code></pre></div>
 <p>If <code>--roster</code> is omitted, the command fetches/caches the
 public 2026 roster release in <code>data/inputs/</code>. To use a
 reviewed/offline roster file, pass
@@ -515,9 +553,10 @@ role/depth-chart input and use it as a documented prior override.</li>
 <li><strong>No live injury/preseason feed is used.</strong> Refresh
 roster/injury information close to kickoff and widen or suppress players
 with uncertain availability.</li>
-<li><strong>No opponent/game-total inputs are yet applied.</strong> Add
-schedules, projected team totals, spreads, and defensive context as
-separately dated inputs.</li>
+<li><strong>The opponent adjustment is intentionally narrow.</strong> It
+uses prior fantasy points allowed by position, not injury reports, line
+play, travel, weather, projected team totals, or spreads. Those should
+be added as separately dated inputs and tested independently.</li>
 <li><strong>Routes and red-zone work are not in the core public
 box-score model.</strong> FTN charting can enhance historical priors,
 but its availability must be treated carefully and it should never be

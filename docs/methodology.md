@@ -100,14 +100,43 @@ overrides this baseline.
 These are baseline means, not fixed simulation values. The simulator turns the
 pass mean into a Gamma-Poisson draw (18% latent-volume coefficient of
 variation) and the rush mean into a Gamma-Poisson draw (20% CV), then draws the
-actual game’s attempts from those rates. Team-total/spread, opponent, QB, and
-coaching projections are not currently included and should be added as dated,
-auditable overrides.
+actual game’s attempts from those rates. Team-total/spread, QB, and coaching
+projections are not currently included and should be added as dated, auditable
+overrides.
+
+### Week 1 opponent adjustment
+
+The schedule is known before the season, so each candidate is joined to its
+Week 1 opponent from nflverse's schedule file. The model then measures what
+that defense allowed to the player's **position** in completed seasons. It does
+not call a defense generally “good” or “bad”: an opponent can be soft against
+RBs and average against WRs.
+
+For each defense-position pair, the code first sums all fantasy points allowed
+in each game, then averages those game totals within season. Those season-level
+rates use the same 0.60 recency decay as player priors. The resulting rate is
+shrunk with 12 league-average games and converted into a multiplier:
+
+```text
+shrunk_allowed = (defense_games × defense_allowed + 12 × league_allowed)
+                  / (defense_games + 12)
+matchup_multiplier = clip(shrunk_allowed / league_allowed, 0.92, 1.08)
+```
+
+A value of `1.05` raises every simulated fantasy-point outcome by 5%; `0.96`
+lowers it by 4%. The cap deliberately keeps this a small adjustment: last
+season's defense is useful signal, not a claim that the same roster and scheme
+will repeat exactly. If a schedule or opponent is unavailable, the multiplier
+is `1.00` and the output marks it as league-neutral. The production CSV shows
+the opponent, multiplier, source, defense's historical allowed rate, and the
+league comparison so the adjustment is auditable.
 
 | Job | File | Function | What it does |
 | --- | --- | --- | --- |
 | Build historical player prior | `src/fantasy_ranges/features.py` | `_player_prior` | Computes recency-weighted historical rates and samples. |
 | Build final Week 1 features | `src/fantasy_ranges/features.py` | `build_preseason_features` | Enforces `season < target_season`, shrinks small samples, identifies team changes, and assigns destination-team volume. |
+| Build defensive matchup prior | `src/fantasy_ranges/features.py` | `_matchup_priors` | Builds the shrunk, capped position-specific opponent multiplier. |
+| Join known Week 1 opponents | `src/fantasy_ranges/data.py` | `fetch_schedule`, `week1_matchups_from_schedule` | Loads nflverse schedule data and maps every team to its Week 1 opponent. |
 
 ### Role uncertainty
 
@@ -137,7 +166,8 @@ player 10,000–20,000 times:
 4. Draw receptions conditional on targets.
 5. Draw positive, right-skewed yards conditional on receptions/carries.
 6. Draw receiving and rushing touchdowns using strongly shrunk TD rates.
-7. Convert the resulting stat line to PPR fantasy points.
+7. Convert the resulting stat line to PPR fantasy points, then apply the small
+   opponent multiplier when a known matchup is available.
 
 The code uses beta-binomial draws for opportunities. In everyday terms, a plain
 binomial model acts as if a player’s chance of a target is fixed for every play.
@@ -222,8 +252,10 @@ This is a statistically honest Week 1 baseline, not a claim of omniscience.
    use it as a documented prior override.
 2. **No live injury/preseason feed is used.** Refresh roster/injury information
    close to kickoff and widen or suppress players with uncertain availability.
-3. **No opponent/game-total inputs are yet applied.** Add schedules, projected
-   team totals, spreads, and defensive context as separately dated inputs.
+3. **The opponent adjustment is intentionally narrow.** It uses prior fantasy
+   points allowed by position, not injury reports, line play, travel, weather,
+   projected team totals, or spreads. Those should be added as separately
+   dated inputs and tested independently.
 4. **Routes and red-zone work are not in the core public box-score model.** FTN
    charting can enhance historical priors, but its availability must be treated
    carefully and it should never be silently backfilled as a live feature.

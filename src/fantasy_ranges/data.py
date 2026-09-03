@@ -13,6 +13,7 @@ NFLVERSE_WEEKLY_URL = (
 NFLVERSE_ROSTER_URL = (
     "https://github.com/nflverse/nflverse-data/releases/download/rosters/roster_{season}.csv"
 )
+NFLVERSE_SCHEDULE_URL = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
 
 # nflverse names are stable, but aliases keep this project compatible with older exports.
 ALIASES = {
@@ -133,7 +134,36 @@ def fetch_roster(season: int, data_dir: str | Path) -> pd.DataFrame:
     return pd.read_csv(path, low_memory=False)
 
 
-def week1_candidates_from_roster(roster: pd.DataFrame, season: int, active_only: bool = True) -> pd.DataFrame:
+def fetch_schedule(data_dir: str | Path) -> pd.DataFrame:
+    """Download and cache the nflverse game schedule used for known matchups."""
+    output = Path(data_dir)
+    output.mkdir(parents=True, exist_ok=True)
+    path = output / "games.csv"
+    if not path.exists():
+        pd.read_csv(NFLVERSE_SCHEDULE_URL).to_csv(path, index=False)
+    return pd.read_csv(path, low_memory=False)
+
+
+def week1_matchups_from_schedule(schedule: pd.DataFrame, season: int) -> pd.DataFrame:
+    """Return one known Week 1 opponent for each team from an nflverse schedule."""
+    required = {"season", "week", "home_team", "away_team"}
+    missing = required.difference(schedule.columns)
+    if missing:
+        raise ValueError(f"Schedule is missing required columns: {sorted(missing)}")
+    games = schedule.loc[schedule["season"].eq(season) & schedule["week"].eq(1)].copy()
+    if "game_type" in games:
+        games = games.loc[games["game_type"].astype(str).str.upper().isin(["REG", "REGULAR"])]
+    home = games[["home_team", "away_team"]].rename(columns={"home_team": "team", "away_team": "opponent"})
+    away = games[["away_team", "home_team"]].rename(columns={"away_team": "team", "home_team": "opponent"})
+    return pd.concat([home, away], ignore_index=True).dropna().drop_duplicates("team")
+
+
+def week1_candidates_from_roster(
+    roster: pd.DataFrame,
+    season: int,
+    active_only: bool = True,
+    matchups: pd.DataFrame | None = None,
+) -> pd.DataFrame:
     """Turn nflverse's official Week 1 roster snapshot into projection candidates.
 
     A roster answers who can plausibly play, not how much. Role uncertainty and
@@ -157,4 +187,7 @@ def week1_candidates_from_roster(roster: pd.DataFrame, season: int, active_only:
     for column in ("depth_chart_position", "years_exp", "status", "headshot_url"):
         if column in candidates:
             keep.append(column)
-    return candidates[keep].dropna(subset=["player_id", "team"]).drop_duplicates(["player_id", "team"])
+    candidates = candidates[keep].dropna(subset=["player_id", "team"]).drop_duplicates(["player_id", "team"])
+    if matchups is not None:
+        candidates = candidates.merge(matchups[["team", "opponent"]], on="team", how="left")
+    return candidates

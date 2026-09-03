@@ -5,6 +5,9 @@ import numpy as np
 import pandas as pd
 
 RECENCY_DECAY = 0.60
+MATCHUP_SHRINKAGE_GAMES = 12
+MATCHUP_MULTIPLIER_MIN = 0.92
+MATCHUP_MULTIPLIER_MAX = 1.08
 
 
 def _weighted_mean(
@@ -47,6 +50,40 @@ def _player_prior(player_history: pd.DataFrame, target_season: int) -> dict[str,
     return out
 
 
+def _matchup_priors(history: pd.DataFrame, target_season: int) -> pd.DataFrame:
+    """Estimate preseason opponent strength by position from points allowed."""
+    historical = history.loc[history["season"] < target_season].copy()
+    required = {"season", "week", "opponent", "position", "fantasy_points_ppr"}
+    if not required.issubset(historical.columns):
+        return pd.DataFrame(columns=["opponent", "position", "matchup_multiplier"])
+    # Sum every position's production against a defense in each game first, so
+    # a defense never gets extra weight because more players recorded a stat.
+    game_allowed = historical.groupby(
+        ["season", "week", "opponent", "position"], as_index=False
+    )["fantasy_points_ppr"].sum()
+    defense_season = game_allowed.groupby(
+        ["season", "opponent", "position"], as_index=False
+    ).agg(points_allowed=("fantasy_points_ppr", "mean"), games=("week", "nunique"))
+    league_season = game_allowed.groupby(["season", "position"], as_index=False).agg(
+        league_points_allowed=("fantasy_points_ppr", "mean")
+    )
+    defense_season = defense_season.merge(league_season, on=["season", "position"], how="left")
+    rows = []
+    for (opponent, position), group in defense_season.groupby(["opponent", "position"]):
+        weights = RECENCY_DECAY ** (target_season - group["season"].to_numpy())
+        allowed = float(np.average(group["points_allowed"], weights=weights))
+        league = float(np.average(group["league_points_allowed"], weights=weights))
+        games = float(group["games"].sum())
+        shrunk = (games * allowed + MATCHUP_SHRINKAGE_GAMES * league) / (games + MATCHUP_SHRINKAGE_GAMES)
+        multiplier = float(np.clip(shrunk / max(league, 0.1), MATCHUP_MULTIPLIER_MIN, MATCHUP_MULTIPLIER_MAX))
+        rows.append({
+            "opponent": opponent, "position": position,
+            "opponent_points_allowed": allowed, "league_points_allowed": league,
+            "matchup_multiplier": multiplier,
+        })
+    return pd.DataFrame(rows)
+
+
 def build_preseason_features(history: pd.DataFrame, candidates: pd.DataFrame, target_season: int) -> pd.DataFrame:
     """Build player priors using only rows with `season < target_season`.
 
@@ -86,6 +123,7 @@ def build_preseason_features(history: pd.DataFrame, candidates: pd.DataFrame, ta
         team_pass=("team_pass_attempts", "mean"), team_rush=("team_rush_attempts", "mean")
     )
     fallback_team_volume = team_defaults.mean(numeric_only=True)
+    matchup_priors = _matchup_priors(history, target_season)
     rows = []
     for _, candidate in candidates.drop_duplicates(["player_id", "team"]).iterrows():
         position = str(candidate["position"]).upper()
@@ -131,5 +169,15 @@ def build_preseason_features(history: pd.DataFrame, candidates: pd.DataFrame, ta
         curated_uncertainty = pd.to_numeric(pd.Series([row.get("role_uncertainty", 0)]), errors="coerce").iloc[0]
         curated_uncertainty = 0.0 if pd.isna(curated_uncertainty) else float(curated_uncertainty)
         row["role_uncertainty"] = min(1.0, max(curated_uncertainty, automatic))
+        opponent = row.get("opponent", np.nan)
+        matchup = matchup_priors.loc[
+            matchup_priors["position"].eq(position) & matchup_priors["opponent"].eq(opponent)
+        ]
+        if len(matchup):
+            row.update(matchup.iloc[0].to_dict())
+            row["matchup_source"] = "prior_points_allowed"
+        else:
+            row["matchup_multiplier"] = 1.0
+            row["matchup_source"] = "league_neutral"
         rows.append(row)
     return pd.DataFrame(rows)

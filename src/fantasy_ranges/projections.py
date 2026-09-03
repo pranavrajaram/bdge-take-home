@@ -42,6 +42,7 @@ def project_week1(
         "p_10_plus", "p_15_plus", "p_20_plus", "range_50", "range_80", "role_uncertainty", "uncertainty",
         "games_sample", "same_team", "team_change", "rookie", "prior_target_share", "prior_rush_share",
         "expected_team_pass_attempts", "expected_team_rush_attempts",
+        "opponent", "matchup_multiplier", "matchup_source", "opponent_points_allowed", "league_points_allowed",
         "calibration",
     ]
     return raw[[column for column in columns if column in raw]].sort_values(

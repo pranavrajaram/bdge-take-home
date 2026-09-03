@@ -6,7 +6,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from fantasy_ranges.data import load_player_games, week1_candidates_from_roster
+from fantasy_ranges.data import (
+    load_player_games, week1_candidates_from_roster, week1_matchups_from_schedule,
+)
 from fantasy_ranges.features import build_preseason_features
 from fantasy_ranges.simulation import ComponentSimulator
 
@@ -17,9 +19,11 @@ PLAYER_NAMES = ("Christian McCaffrey", "Puka Nacua")
 
 def main() -> None:
     games = load_player_games(ROOT / "data/raw/player_games.csv")
+    schedule = pd.read_csv(ROOT / "data/inputs/games.csv", low_memory=False)
     roster = week1_candidates_from_roster(
         pd.read_csv(ROOT / "data/inputs/roster_2026.csv", low_memory=False),
         season=2026,
+        matchups=week1_matchups_from_schedule(schedule, 2026),
     )
     features = build_preseason_features(games, roster, target_season=2026)
     production = pd.read_csv(ROOT / "outputs/week1_2026/projections.csv")
@@ -36,6 +40,8 @@ def main() -> None:
                 "player": player_name,
                 "position": str(feature["position"]),
                 "team": str(feature["team"]),
+                "opponent": str(feature["opponent"]),
+                "matchup_multiplier": float(feature["matchup_multiplier"]),
                 "targets": components["targets"],
                 "carries": components["carries"],
                 "receptions": components["receptions"],
@@ -47,6 +53,7 @@ def main() -> None:
                 "yardage_points": components["yardage_points"],
                 "touchdown_points": components["touchdown_points"],
                 "raw_ppr_mean": components["raw_ppr_mean"],
+                "matchup_ppr_mean": components["raw_ppr_mean"] * float(feature["matchup_multiplier"]),
                 "raw_p50": distribution.summary()["p50"],
                 "reported_p50": float(output["p50"]),
             }

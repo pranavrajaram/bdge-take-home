@@ -6,6 +6,7 @@
 | nflverse play-by-play / `stats_team` | Team volume and game environment | offensive attempts/plays, score context, game IDs; calculate with clear play filters | Recommended join |
 | nflverse FTN charting / participation | Routes and route participation | Historical 2022+ is available after season completion; source/timing changed around 2023 | Optional, never an in-season dependency |
 | nflverse rosters / players / draft picks | Age, experience, draft capital, roster status | Reliable identifiers and demographic/draft joins | Recommended prior enrichment |
+| nflverse `games.csv` schedule | Known Week 1 opponent | `season`, `week`, `home_team`, `away_team`; stable before kickoff | Required when applying matchup adjustment |
 | Public consensus projections | Center / benchmark | Current sources may be accessible; reproducible historical archives are uneven | Optional input, not required |
 
 Direct weekly stats URL pattern used by the loader:

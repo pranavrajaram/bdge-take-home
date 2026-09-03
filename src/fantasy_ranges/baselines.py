@@ -15,7 +15,8 @@ def expected_points(features: pd.DataFrame) -> pd.Series:
     receptions = targets * features["prior_catch_rate"]
     points = receptions + 0.1 * (receptions * features["prior_yards_per_reception"] + carries * features["prior_rush_yards_per_carry"])
     points += 6 * (targets * features["prior_receiving_td_rate"] + carries * features["prior_rushing_td_rate"])
-    return points.clip(lower=0)
+    matchup = features.get("matchup_multiplier", pd.Series(1.0, index=features.index))
+    return (points * matchup).clip(lower=0)
 
 
 class PositionNormalBaseline:

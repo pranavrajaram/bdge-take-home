@@ -22,13 +22,15 @@ def main() -> None:
     PUBLIC_CALIBRATION.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(CALIBRATION_SOURCE, PUBLIC_CALIBRATION)
     columns = [
-        "player_name", "position", "team", "mean", "p10", "p25", "p50", "p75", "p90",
+        "player_name", "position", "team", "opponent", "matchup_multiplier", "mean", "p10", "p25", "p50", "p75", "p90",
         "p_10_plus", "p_15_plus", "p_20_plus", "role_uncertainty", "games_sample",
     ]
     display = projections[columns].rename(
         columns={
             "player_name": "player",
             "position": "pos",
+            "opponent": "opp",
+            "matchup_multiplier": "matchup",
             "p_10_plus": "P(10+)",
             "p_15_plus": "P(15+)",
             "p_20_plus": "P(20+)",
@@ -39,6 +41,7 @@ def main() -> None:
     formatters = {
         "mean": "{:.2f}".format, "p10": "{:.2f}".format, "p25": "{:.2f}".format,
         "p50": "{:.2f}".format, "p75": "{:.2f}".format, "p90": "{:.2f}".format,
+        "matchup": "{:.3f}".format,
         "P(10+)": "{:.3f}".format, "P(15+)": "{:.3f}".format, "P(20+)": "{:.3f}".format,
         "role uncertainty": "{:.3f}".format,
     }

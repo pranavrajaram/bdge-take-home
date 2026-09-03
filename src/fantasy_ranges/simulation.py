@@ -144,6 +144,10 @@ class ComponentSimulator:
         rec_tds = rng.poisson(np.clip(targets * rec_td, 0, 1.2))
         rush_tds = rng.poisson(np.clip(carries * rush_td, 0, 1.0))
         points = receptions + 0.1 * (receiving_yards + rushing_yards) + 6 * (rec_tds + rush_tds)
+        # Preseason-only opponent adjustment from prior points allowed to this
+        # position. It moves the level a little without adding fake certainty.
+        matchup_multiplier = float(np.clip(x.get("matchup_multiplier", 1.0), 0.92, 1.08))
+        points = points * matchup_multiplier
         # An optional consensus/curated center is a center prior, not a replacement distribution.
         anchor = x.get("expected_fantasy_points", x.get("consensus_fp", np.nan))
         if pd.notna(anchor) and float(anchor) > 0:

@@ -7,7 +7,10 @@ from pathlib import Path
 import pandas as pd
 
 from .backtest import calibration_plot, run_week1_backtest
-from .data import fetch_player_stats, fetch_roster, load_player_games, week1_candidates_from_roster
+from .data import (
+    fetch_player_stats, fetch_roster, fetch_schedule, load_player_games,
+    week1_candidates_from_roster, week1_matchups_from_schedule,
+)
 from .demo import run_demo
 from .projections import project_week1
 
@@ -29,6 +32,7 @@ def main() -> None:
     project.add_argument("--input", required=True, help="normalized historical player-game CSV")
     project.add_argument("--season", type=int, default=2026)
     project.add_argument("--roster", help="optional local nflverse roster CSV; fetched/cached when omitted")
+    project.add_argument("--schedule", help="optional local nflverse games CSV; fetched/cached when omitted")
     project.add_argument("--data-dir", default="data/inputs", help="cache location when roster is fetched")
     project.add_argument("--out-dir", default="outputs/week1_2026")
     project.add_argument("--simulations", type=int, default=20_000)
@@ -48,7 +52,9 @@ def main() -> None:
     elif args.command == "project-week1":
         games = load_player_games(args.input)
         roster = pd.read_csv(args.roster, low_memory=False) if args.roster else fetch_roster(args.season, args.data_dir)
-        candidates = week1_candidates_from_roster(roster, args.season)
+        schedule = pd.read_csv(args.schedule, low_memory=False) if args.schedule else fetch_schedule(args.data_dir)
+        matchups = week1_matchups_from_schedule(schedule, args.season)
+        candidates = week1_candidates_from_roster(roster, args.season, matchups=matchups)
         projection = project_week1(games, candidates, args.season, args.simulations, calibrate=not args.no_calibrate)
         out = Path(args.out_dir); out.mkdir(parents=True, exist_ok=True)
         projection.to_csv(out / "projections.csv", index=False)

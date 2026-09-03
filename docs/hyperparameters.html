@@ -133,6 +133,21 @@ ceiling.</td>
 <td>Caps receiving/rushing TD Poisson rates.</td>
 <td>Guardrails against malformed input, not football laws.</td>
 </tr>
+<tr class="even">
+<td>12</td>
+<td>features.py, matchup prior</td>
+<td>League-average pseudo-games added to each defense-position
+points-allowed rate.</td>
+<td>Heuristic shrinkage for noisy defense performance; tune only through
+walk-forward validation.</td>
+</tr>
+<tr class="odd">
+<td>.92, 1.08</td>
+<td>features.py, simulation.py</td>
+<td>Lower and upper bounds for the Week 1 opponent multiplier.</td>
+<td>Intentional ±8% cap: matchup should refine a forecast, not dominate
+it.</td>
+</tr>
 </tbody>
 </table>
 <h2

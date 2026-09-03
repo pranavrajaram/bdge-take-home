@@ -3,6 +3,8 @@ window.COMPONENT_DIAGNOSTICS = [
     "player": "Christian McCaffrey",
     "position": "RB",
     "team": "SF",
+    "opponent": "LA",
+    "matchup_multiplier": 0.9274436526086514,
     "targets": 5.98065,
     "carries": 17.56868,
     "receptions": 4.87191,
@@ -14,13 +16,16 @@ window.COMPONENT_DIAGNOSTICS = [
     "yardage_points": 11.948464052468086,
     "touchdown_points": 5.288880000000001,
     "raw_ppr_mean": 22.10925405246809,
-    "raw_p50": 20.833604095318357,
-    "reported_p50": 20.506606586742546
+    "matchup_ppr_mean": 20.505087334873632,
+    "raw_p50": 19.321993879164612,
+    "reported_p50": 19.143184314696256
   },
   {
     "player": "Puka Nacua",
     "position": "WR",
     "team": "LA",
+    "opponent": "SF",
+    "matchup_multiplier": 1.0148648604777861,
     "targets": 8.62697,
     "carries": 0.66208,
     "receptions": 6.28342,
@@ -32,7 +37,8 @@ window.COMPONENT_DIAGNOSTICS = [
     "yardage_points": 8.500049805172148,
     "touchdown_points": 2.61924,
     "raw_ppr_mean": 17.402709805172147,
-    "raw_p50": 15.795887608351453,
-    "reported_p50": 15.779825078099073
+    "matchup_ppr_mean": 17.66139865836143,
+    "raw_p50": 16.03069127377239,
+    "reported_p50": 16.043068418287532
   }
 ];
