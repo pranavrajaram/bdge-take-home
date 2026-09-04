@@ -35,9 +35,8 @@ The project compares the component simulator with two simple benchmarks: a posit
 | `src/fantasy_ranges/projections.py` | Generates the production projection table. |
 | `src/fantasy_ranges/baselines.py` | Defines the simple benchmark models used in evaluation. |
 | `docs/week1_projection_demo.html` | The presentation-ready public walkthrough. |
-| `docs/methodology.md` | Detailed implementation guide with links to the relevant functions. |
-| `docs/hyperparameters.md` | Rationale for model constants and sensitivity choices. |
-| `scripts/render_projection_html.py` | Renders the downloadable projection CSV as a browseable HTML table. |
+| `docs/methodology.html` | Detailed implementation guide with links to the relevant functions. |
+| `docs/hyperparameters.html` | Rationale for model constants and sensitivity choices. |
 
 ## Reproduce locally
 
@@ -77,6 +76,6 @@ The command applies walk-forward conformal calibration by default. Use `--no-cal
 
 ## Data and scope
 
-The historical box-score source is nflverse weekly `stats_player` data. The model covers RB, WR, and TE projections under 1-PPR scoring: one point per reception, 0.1 points per rushing or receiving yard, and six points per touchdown. See [data sources](docs/data_sources.md) for source details and attribution.
+The historical box-score source is nflverse weekly `stats_player` data. The model covers RB, WR, and TE projections under 1-PPR scoring: one point per reception, 0.1 points per rushing or receiving yard, and six points per touchdown. The data source and field choices are described in the public [methodology](https://pranavrajaram.github.io/bdge-take-home/methodology.html).
 
 The model is intentionally a transparent preseason baseline, not a claim that it has perfect injury, depth-chart, coaching, or team-context information. Those unknowns are reflected primarily through wider ranges. Touchdowns remain particularly noisy and are deliberately shrunk toward position-level rates.
