@@ -64,8 +64,13 @@ body.deck-ready{overflow:hidden}
 .deck-progress{flex:1;color:#475467;text-align:center;font:700 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.035em;text-transform:uppercase}
 .deck-progress b{color:var(--blue)}
 .step-nav a.is-current{border-color:var(--blue);background:#eff6ff;color:var(--blue)}
+.overview-actions{display:flex;flex-wrap:wrap;gap:10px;margin:22px 0 0}
+.overview-actions a{display:inline-flex;align-items:center;justify-content:center;padding:10px 13px;border:1px solid #b9c4d1;border-radius:5px;background:#fff;color:var(--ink);font-size:14px;font-weight:700;text-decoration:none}
+.overview-actions a.primary{border-color:var(--blue);background:var(--blue);color:#fff}
+.overview-actions a:hover{border-color:var(--blue);text-decoration:none}
+.overview-actions a.primary:hover{background:#1e40af}
 @keyframes slide-enter{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
-@media(max-width:760px){.deck-ready .page{padding:0 17px}.deck-ready .slide{height:calc(100dvh - 82px);padding:28px 0 82px}.deck-controls{bottom:10px;min-width:calc(100vw - 22px);padding:7px}.deck-controls button{padding:7px 8px}.deck-progress{font-size:10px}}
+@media(max-width:760px){.deck-ready .page{padding:0 17px}.deck-ready .slide{height:calc(100dvh - 82px);padding:28px 0 82px}.deck-controls{bottom:10px;min-width:calc(100vw - 22px);padding:7px}.deck-controls button{padding:7px 8px}.deck-progress{font-size:10px}.overview-actions{margin-top:18px}.overview-actions a{width:100%}}
 @media(prefers-reduced-motion:reduce){.deck-ready .slide.is-active{animation:none}}
 </style>
 </head>
@@ -74,6 +79,7 @@ body.deck-ready{overflow:hidden}
 <header>
 <h1>BDGE Data Take Home</h1>
 <p class="subtitle">A complete walkthrough of how historical football data becomes a Week 1 range for each RB, WR, and TE.</p>
+<div class="overview-actions"><a class="primary" href="https://www.loom.com/share/e4200774532f46c68fc1481e2823aa98">Watch the video walkthrough</a><a href="https://github.com/pranavrajaram/bdge-take-home">View the GitHub repository</a></div>
 <div class="resource-links"><strong>Supporting material</strong><a href="projections.html">Full projections</a><a href="methodology.html">Methodology</a><a href="hyperparameters.html">Model settings</a></div>
 <nav class="step-nav"><a href="#data"><span>01</span>Data</a><a href="#priors"><span>02</span>Player priors</a><a href="#role"><span>03</span>Role uncertainty</a><a href="#matchup"><span>04</span>Matchup</a><a href="#simulation"><span>05</span>Simulation</a><a href="#evaluation"><span>06</span>Evaluation</a><a href="#projections"><span>07</span>Projections</a></nav>
 <div class="summary-grid">
