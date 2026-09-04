@@ -32,9 +32,14 @@ def main() -> None:
 
     for index, player_name in enumerate(PLAYER_NAMES):
         feature = features.loc[features["player_name"].eq(player_name)].iloc[0]
-        distribution = simulator.simulate(feature, simulations=100_000, seed_offset=index)
-        components = distribution.component_summary()
         output = production.loc[production["player_name"].eq(player_name)].iloc[0]
+        # Use the same number of draws and player seed offset as the production
+        # run. This keeps the widget's matchup-adjusted mean identical to the
+        # Mean column rather than showing Monte Carlo variation from a separate
+        # 100,000-draw diagnostic sample.
+        feature_offset = int(features.index.get_loc(feature.name))
+        distribution = simulator.simulate(feature, simulations=20_000, seed_offset=feature_offset)
+        components = distribution.component_summary()
         diagnostics.append(
             {
                 "player": player_name,
@@ -53,7 +58,7 @@ def main() -> None:
                 "yardage_points": components["yardage_points"],
                 "touchdown_points": components["touchdown_points"],
                 "raw_ppr_mean": components["raw_ppr_mean"],
-                "matchup_ppr_mean": components["raw_ppr_mean"] * float(feature["matchup_multiplier"]),
+                "matchup_ppr_mean": float(output["mean"]),
                 "raw_p50": distribution.summary()["p50"],
                 "reported_p50": float(output["p50"]),
             }
